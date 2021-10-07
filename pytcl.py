@@ -2,7 +2,7 @@ import sys
 from typing import List
 import logging
 logging.basicConfig()
-logging.root.setLevel(logging.NOTSET)
+logging.root.setLevel(logging.WARNING)
 logger = logging.getLogger("TCL_Machine")
 
 from tokenizer.Tokenizer import Tokenizer, TT
@@ -29,18 +29,35 @@ class TCL_machine:
 
     def interpret(self):
         logger.info("Starting to interpret code")
-        
+
+        # handle program operations on the stack
+        self.stack = [] # initialize empty stack
+
         # Tokenize the contents of the file
         self.izer = Tokenizer(self.contents)
 
         while self.izer.has_more_tokens():
             token = self.izer.advance()
-            logger.debug(token)
+            logger.info(token)
             match token[0]: # match the tokentype
                 case TT.COMMENT:
                     continue # we ignore comments
+                case TT.INT_CONST:
+                    self.stack.append(token[1])
+                case TT.KEYWORD:
+                    # handle the keyword
+                    match token[1]:
+                        case "print":
+                            if len(self.stack) == 0:
+                                line = token[2]
+                                col = token[3]
+                                err_msg = f"Interpreter has nothing to print from the stack\nToken at line:{line} column:{col}"
+                                raise ValueError(err_msg)
+                            print(self.stack.pop())
+                        case _:
+                            raise Exception(f"Interpreter does not handle keyword ->{token[1]}<-")
                 case _:
-                    raise Exception("Tokenizer does not handle the given tokentype")
+                    raise Exception(f"Interpreter does not handle tokentype ->{token[0]}<-")
 
 # give some information about how to use from the cli
 def cli_reference():
