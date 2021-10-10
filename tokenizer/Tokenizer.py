@@ -7,9 +7,10 @@ logger = logging.getLogger("TCL_Tokenizer")
 
 # the tokens that will be recognized by the tokenizer
 class TT(Enum):
-    COMMENT = auto()
-    INT_CONST = auto()
-    KEYWORD = auto()
+    COMMENT = auto()    # comment
+    INT_CONST = auto()  # integer constant
+    KEYWORD = auto()    # keyword
+    COMPARISON = auto() # comparison
 
 class Tokenizer:
     def __init__(self, file_contents):
@@ -22,6 +23,7 @@ class Tokenizer:
         keywords_txt = ["print"]
         # compile keywords ahead
         self.keywords = [re.compile(word) for word in keywords_txt]
+        self.comparisons = ["=="]
 
     def has_more_tokens(self) -> bool:
         "check if there is more source to tokenize"
@@ -63,9 +65,28 @@ class Tokenizer:
             return self.get_int_const()
         elif self.is_keyword():
             return self.get_keyword()
+        elif self.is_comparison():
+            return self.get_comparison()
         else:
             raise Exception(f"No tokens found by tokenizer in ->{self.contents}<-")
 
+
+    ## --------------------
+    ## COMPARISONS functions
+    ## --------------------
+    def is_comparison(self) -> bool:
+        "check if the first part if self.contents is a comparison"
+        return any([bool(re.match(val, self.contents)) for val in self.comparisons])
+        
+    def get_comparison(self):
+        "returns the comparison at the beginning of self.contents only call if self.is_comparison() == True"
+        for comp in self.comparisons:
+            val = re.match(comp, self.contents)
+            if val:
+                self.contents = self.contents[len(val[0]):]
+                column = self.col
+                self.col += len(val[0])
+                return (TT.COMPARISON, val[0], self.line, column)
 
     ## --------------------
     ## KEYWORD functions

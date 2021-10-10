@@ -48,6 +48,7 @@ class TCL_machine:
                     # handle the keyword
                     match token[1]:
                         case "print":
+                            # TODO: Make typechecker that handles this edgecase so it does not have to be here
                             if len(self.stack) == 0:
                                 line = token[2]
                                 col = token[3]
@@ -56,6 +57,22 @@ class TCL_machine:
                             print(self.stack.pop())
                         case _:
                             raise Exception(f"Interpreter does not handle keyword ->{token[1]}<-")
+                case TT.COMPARISON:
+                    # TODO: Make typechecker that handles this edgecase so it does not have to be here
+                    if token[1] == "==":
+                        if len(self.stack) < 2:
+                            line = token[2]
+                            col = token[3]
+                            err_msg = f"Interpreter does not have 2 values to compare from the stack\nToken at line:{line} column:{col}"
+                            raise ValueError(err_msg)
+                        y = self.stack.pop()
+                        x = self.stack.pop()
+                        if x == y:
+                            self.stack.append(1)
+                        else:
+                            self.stack.append(0)
+                    else:
+                        raise Exception(f"Interpreter does not handle this comparison ->{token[1]}<-")
                 case _:
                     raise Exception(f"Interpreter does not handle tokentype ->{token[0]}<-")
 
