@@ -52,3 +52,11 @@ if they are equal push 1 (truthy) else push 0 (false)
 0
 1
 ```
+
+## If statement
+when we encounter an If statement we check the top value from the stack.
+If 1 (truty) run the instructions following the if statement
+If 0 (false) skip the instructions in the if statement and jump to the matching end keyword
+
+1 if 42 print end # print this
+0 if 43 print end # don't print this

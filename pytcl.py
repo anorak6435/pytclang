@@ -1,5 +1,6 @@
 import sys
 from typing import List
+from enum import Enum, auto
 import logging
 logging.basicConfig()
 logging.root.setLevel(logging.WARNING)
@@ -7,12 +8,26 @@ logger = logging.getLogger("TCL_Machine")
 
 from tokenizer.Tokenizer import Tokenizer, TT
 
+# define the datatypes that are supported by the language
+class DATTYP(Enum):
+    INT = auto()
+
 print("Tcl/Forth inspired language")
 
 class TCL_machine:
     def run(self, cli_args : List[str]):
         if cli_args[0] == "exe":
             self.contents = self.load_file_contents(cli_args[1])
+        
+            logger.info("Starting to interpret code")
+            # handle program operations on the stack
+            self.stack = [] # initialize empty stack
+
+            # Tokenize the contents of the file
+            self.izer = Tokenizer(self.contents)
+
+            self.typecheck_program(self.contents)
+            self.stack = []
             self.interpret()
         elif cli_args[0] == "build":
             self.contents = self.load_file_contents(cli_args[1])
@@ -27,54 +42,65 @@ class TCL_machine:
     def compile(self):
         raise Exception("compiler not implemented")
 
-    def interpret(self):
-        logger.info("Starting to interpret code")
 
-        # handle program operations on the stack
-        self.stack = [] # initialize empty stack
+    def typecheck_program(self, contents):
+        lexer = Tokenizer(contents)
 
-        # Tokenize the contents of the file
-        self.izer = Tokenizer(self.contents)
-
-        while self.izer.has_more_tokens():
-            token = self.izer.advance()
-            logger.info(token)
-            match token[0]: # match the tokentype
-                case TT.COMMENT:
-                    continue # we ignore comments
+        while lexer.has_more_tokens():
+            token = lexer.advance()
+            match token[0]:
                 case TT.INT_CONST:
-                    self.stack.append(token[1])
+                    self.stack.append(DATTYP.INT)
+                case TT.COMMENT:
+                    pass # ignore them comments
+                case TT.COMPARISON:
+                    if len(self.stack) < 2:
+                        raise ValueError(f"Interpreter does not have 2 values to compare from the stack\nToken at line:{token[2]} column:{token[3]}")
+                    self.stack.pop() # eq to 2 pops and a push because there is not a difference in datatype for the boolean ??YET??
                 case TT.KEYWORD:
-                    # handle the keyword
                     match token[1]:
                         case "print":
-                            # TODO: Make typechecker that handles this edgecase so it does not have to be here
                             if len(self.stack) == 0:
-                                line = token[2]
-                                col = token[3]
-                                err_msg = f"Interpreter has nothing to print from the stack\nToken at line:{line} column:{col}"
-                                raise ValueError(err_msg)
-                            print(self.stack.pop())
+                                raise ValueError(f"Interpreter has nothing to print from the stack\nToken at line:{token[2]} column:{token[3]}")
+                            self.stack.pop()
                         case _:
-                            raise Exception(f"Interpreter does not handle keyword ->{token[1]}<-")
-                case TT.COMPARISON:
-                    # TODO: Make typechecker that handles this edgecase so it does not have to be here
-                    if token[1] == "==":
-                        if len(self.stack) < 2:
-                            line = token[2]
-                            col = token[3]
-                            err_msg = f"Interpreter does not have 2 values to compare from the stack\nToken at line:{line} column:{col}"
-                            raise ValueError(err_msg)
-                        y = self.stack.pop()
-                        x = self.stack.pop()
-                        if x == y:
-                            self.stack.append(1)
-                        else:
-                            self.stack.append(0)
-                    else:
-                        raise Exception(f"Interpreter does not handle this comparison ->{token[1]}<-")
+                            raise Exception(f"UnImplemented keyword for the type checker:->{token[1]}<-")
                 case _:
-                    raise Exception(f"Interpreter does not handle tokentype ->{token[0]}<-")
+                    raise Exception(f"UnImplemented instruction for the type checker:->{token[0]}<-")
+
+    def interpret(self):
+        while self.izer.has_more_tokens(): # go through the program until there are no more tokens
+            token = self.izer.advance()
+            logger.info(token)
+            self.interpret_token(token)
+
+    def interpret_token(self, token):
+        match token[0]: # match the tokentype
+            case TT.COMMENT:
+                pass # we ignore comments
+            case TT.INT_CONST:
+                self.stack.append(token[1])
+            case TT.KEYWORD:
+                self.interpret_keyword(token) # handle the keyword
+            case TT.COMPARISON:
+                if token[1] == "==":
+                    y = self.stack.pop()
+                    x = self.stack.pop()
+                    if x == y:
+                        self.stack.append(1)
+                    else:
+                        self.stack.append(0)
+                else:
+                    raise Exception(f"Interpreter does not handle this comparison ->{token[1]}<-")
+            case _:
+                raise Exception(f"Interpreter does not handle tokentype ->{token[0]}<-")
+
+    def interpret_keyword(self, token):
+        match token[1]:
+            case "print":
+                print(self.stack.pop())
+            case _:
+                raise Exception(f"Interpreter does not handle keyword ->{token[1]}<-")
 
 # give some information about how to use from the cli
 def cli_reference():

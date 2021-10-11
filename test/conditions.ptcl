@@ -1,14 +1,30 @@
-if {1} 42 print end # print 42
-if {0} 24 print end # don't print 24
+1 if 42 print end # print 42
+0 if 24 print end # don't print 24
+
+# check for nested boiiz
+1 1 == if
+    21 print
+    0 13 == if
+        22 print
+    end
+    23 print
+    1 1 == if
+        24 print
+        96 96 == if
+            96 print # for funzies
+        end
+    end
+end
+25 print
 
 # equality
-if {0 0 ==} "PASS: 0 == 0" else "ERROR: 0 == 0" end
-if {0 1 ==} "ERROR: 0 != 1" else "PASS: 0 != 1" end
-if {1 0 ==} "ERROR: 1 != 0" else "PASS: 1 != 0" end
-if {1 1 ==} "PASS: 1 == 1" else "ERROR: 1 == 1" end
+0 0 == if "PASS: 0 == 0" else "ERROR: 0 == 0" end print
+0 1 == if "ERROR: 0 != 1" else "PASS: 0 != 1" end print
+1 0 == if "ERROR: 1 != 0" else "PASS: 1 != 0" end print
+1 1 == if "PASS: 1 == 1" else "ERROR: 1 == 1" end print
 
 # greater
-if {0 0 >} "ERROR: 0 > 0" else "PASS 0 > 0" end
-if {0 1 >} "ERROR: 0 > 1" else "PASS 0 > 1" end
-if {1 0 >} "PASS: 1 > 0" else "ERROR 1 > 0" end
-if {1 1 >} "ERROR: 0 > 1" else "PASS 0 > 1" end
+0 0 > if "ERROR: 0 > 0" else "PASS 0 > 0" end print
+0 1 > if "ERROR: 0 > 1" else "PASS 0 > 1" end print
+0 1 > if 1 0 > "PASS: 1 > 0" else "ERROR 1 > 0" end print
+1 1 > if "ERROR: 0 > 1" else "PASS 0 > 1" end print
