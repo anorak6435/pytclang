@@ -1,5 +1,6 @@
 from enum import Enum, auto
 from typing import Tuple
+from dataclasses import dataclass
 import re
 import logging
 logging.basicConfig() # Warning do not set_level use pytcl for changing that
@@ -11,6 +12,13 @@ class TT(Enum):
     INT_CONST = auto()  # integer constant
     KEYWORD = auto()    # keyword
     COMPARISON = auto() # comparison
+
+@dataclass
+class Token:
+    typ : TT
+    value : str
+    line : int
+    column : int
 
 class Tokenizer:
     def __init__(self, file_contents):
@@ -86,7 +94,7 @@ class Tokenizer:
                 self.contents = self.contents[len(val[0]):]
                 column = self.col
                 self.col += len(val[0])
-                return (TT.COMPARISON, val[0], self.line, column)
+                return Token(TT.COMPARISON, val[0], self.line, column)
 
     ## --------------------
     ## KEYWORD functions
@@ -103,7 +111,7 @@ class Tokenizer:
                 self.contents = self.contents[len(val[0]):]
                 column = self.col
                 self.col += len(val[0])
-                return (TT.KEYWORD, val[0], self.line, column)
+                return Token(TT.KEYWORD, val[0], self.line, column)
 
     ## --------------------
     ## INT_CONST functions
@@ -118,7 +126,7 @@ class Tokenizer:
         self.contents = self.contents[len(val[0]):]
         column = self.col
         self.col += len(val[0])
-        return (TT.INT_CONST, int(val[0]), self.line, column)
+        return Token(TT.INT_CONST, int(val[0]), self.line, column)
 
     ## --------------------
     ## COMMENT functions
@@ -133,4 +141,4 @@ class Tokenizer:
         self.contents = self.contents[len(val[0]):]
         column = self.col
         self.col += len(val[0])
-        return (TT.COMMENT, val[0], self.line, column)
+        return Token(TT.COMMENT, val[0], self.line, column)
